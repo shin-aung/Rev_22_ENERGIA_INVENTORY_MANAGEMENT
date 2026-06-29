@@ -145,6 +145,26 @@ const InvoicesPage: React.FC = () => {
     loadAll();
   };
 
+  // Phase 4: request refund or cancellation
+  const [actionType, setActionType] = useState<'invoice_refund' | 'invoice_cancel' | null>(null);
+  const [actionReturnStock, setActionReturnStock] = useState(true);
+  const [actionReason, setActionReason] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionErr, setActionErr] = useState<string | null>(null);
+
+  const submitAction = async () => {
+    if (!detail || !actionType) return;
+    if (!actionReason.trim()) { setActionErr('A reason is required.'); return; }
+    setActionBusy(true); setActionErr(null);
+    const { error } = await supabase.rpc('request_invoice_action', {
+      p_invoice_id: detail.id, p_type: actionType,
+      p_return_stock: actionReturnStock, p_reason: actionReason.trim(),
+    });
+    setActionBusy(false);
+    if (error) { setActionErr(error.message); return; }
+    setActionType(null); setActionReason(''); setDetail(null); loadAll();
+  };
+
   const filtered = invoices.filter(i => statusFilter === 'all' || i.status === statusFilter);
   const statusOptions: ('all' | InvoiceStatus)[] = ['all', 'unpaid', 'partially_paid', 'paid', 'cancelled', 'refunded'];
 
@@ -274,7 +294,9 @@ const InvoicesPage: React.FC = () => {
       {detail && (
         <Modal title={`Invoice ${detail.invoice_no}`} maxWidth={560} onClose={() => setDetail(null)}
           footer={
-            detail.status === 'paid' || detail.status === 'cancelled' || detail.status === 'refunded'
+            detail.status === 'paid'
+              ? <><button className="btn btn-secondary" onClick={() => setDetail(null)}>Close</button><button className="btn btn-danger" onClick={() => { setActionType('invoice_refund'); setActionReturnStock(true); setActionReason(''); setActionErr(null); }}>Request Refund</button></>
+              : detail.status === 'cancelled' || detail.status === 'refunded' || detail.status === 'cancellation_requested' || detail.status === 'refund_requested'
               ? <button className="btn btn-secondary" onClick={() => setDetail(null)}>Close</button>
               : <><button className="btn btn-secondary" onClick={() => setDetail(null)}>Close</button><button className="btn btn-primary" onClick={handlePay} disabled={payBusy}><CreditCard size={15} /> {payBusy ? 'Processing…' : 'Record Payment'}</button></>
           }>
@@ -355,6 +377,27 @@ const InvoicesPage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Refund / cancel request modal */}
+      {actionType && detail && (
+        <Modal title={actionType === 'invoice_refund' ? 'Request Refund' : 'Request Cancellation'} maxWidth={440} onClose={() => setActionType(null)}
+          footer={<><button className="btn btn-secondary" onClick={() => setActionType(null)}>Back</button><button className="btn btn-danger" onClick={submitAction} disabled={actionBusy}>{actionBusy ? 'Submitting…' : 'Submit Request'}</button></>}>
+          <div className="form-grid">
+            {actionErr && <div className="alert alert-danger" style={{ marginBottom: 0 }}><span>⚠</span><div>{actionErr}</div></div>}
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              This sends a request for Owner/Manager approval. {actionType === 'invoice_refund' ? 'Refunds' : 'Cancellations'} reverse any affiliate commission.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }}>
+              <input type="checkbox" checked={actionReturnStock} onChange={e => setActionReturnStock(e.target.checked)} style={{ width: 'auto' }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Return stock to store</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>Tick if items are resellable. Untick if damaged/lost.</div>
+              </div>
+            </label>
+            <div className="form-group"><label>Reason *</label><textarea rows={2} value={actionReason} onChange={e => setActionReason(e.target.value)} placeholder="Why is this being requested?" autoFocus /></div>
           </div>
         </Modal>
       )}

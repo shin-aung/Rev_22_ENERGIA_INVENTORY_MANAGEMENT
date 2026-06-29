@@ -17,6 +17,10 @@ import CustomersPage from './pages/CustomersPage';
 import AffiliatesPage from './pages/AffiliatesPage';
 import PriceListPage from './pages/PriceListPage';
 import InvoicesPage from './pages/InvoicesPage';
+import ApprovalsPage from './pages/ApprovalsPage';
+import AdjustmentsPage from './pages/AdjustmentsPage';
+import AuditLogPage from './pages/AuditLogPage';
+import ReportsPage from './pages/ReportsPage';
 import { Leaf } from 'lucide-react';
 
 const FullScreenLoader: React.FC<{ message?: string }> = ({ message }) => (
@@ -72,6 +76,10 @@ const AppRoutes: React.FC = () => {
       <Route path="/affiliates" element={<Protected><AffiliatesPage /></Protected>} />
       <Route path="/price-list" element={<Protected><PriceListPage /></Protected>} />
       <Route path="/invoices" element={<Protected><InvoicesPage /></Protected>} />
+      <Route path="/approvals" element={<Protected><ApprovalsPage /></Protected>} />
+      <Route path="/adjustments" element={<Protected><AdjustmentsPage /></Protected>} />
+      <Route path="/audit-log" element={<Protected><AuditLogPage /></Protected>} />
+      <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
       <Route path="/payment-methods" element={<Protected><PaymentMethodsPage /></Protected>} />
       <Route path="/users" element={<Protected><UsersPage /></Protected>} />
       <Route path="*" element={<Navigate to="/" replace />} />

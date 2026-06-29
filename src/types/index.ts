@@ -309,3 +309,40 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   refund_requested: 'Refund Requested',
   refunded: 'Refunded',
 };
+
+// ── Phase 4: Controls types ──────────────────────────────────────────────────
+export interface AuditLog {
+  id: string;
+  table_name: string;
+  record_id: string | null;
+  action: string;
+  old_data: any;
+  new_data: any;
+  changed_by: string | null;
+  created_at: string;
+}
+
+export interface AdjustmentRequest {
+  id: string;
+  request_type: string;
+  status: ApprovalStatus;
+  requested_by: string;
+  approved_by: string | null;
+  related_record_id: string | null;
+  reason: string | null;
+  response_note: string | null;
+  payload: {
+    location_type?: LocationType;
+    location_id?: string;
+    product_id?: string;
+    current_qty?: number;
+    new_qty?: number;
+    difference?: number;
+    reference?: string;
+    invoice_id?: string;
+    invoice_no?: string;
+    return_stock?: boolean;
+  } | null;
+  created_at: string;
+  approved_at: string | null;
+}

@@ -5,7 +5,7 @@ import { ROLE_LABELS, isManagerOrAbove, isOwnerOrManager, isOwnerOrAdmin, canMan
 import {
   LayoutDashboard, Package, Warehouse, Store, Users2, CreditCard,
   LogOut, Leaf, ShieldCheck, Boxes, ArrowLeftRight, History, PackageOpen,
-  Users, Star, Tag, FileText,
+  Users, Star, Tag, FileText, ClipboardCheck, SlidersHorizontal, ScrollText, BarChart3,
 } from 'lucide-react';
 
 interface NavItem {
@@ -43,6 +43,13 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/customers', label: 'Customers', icon: <Users size={17} />, show: true },
     { to: '/affiliates', label: 'Affiliates', icon: <Star size={17} />, show: isManagerOrAbove(role) },
     { to: '/price-list', label: 'Price List', icon: <Tag size={17} />, show: isOwnerOrManager(role) },
+  ];
+
+  const controlsNav: NavItem[] = [
+    { to: '/approvals', label: 'Approvals', icon: <ClipboardCheck size={17} />, show: isOwnerOrManager(role) },
+    { to: '/adjustments', label: 'Adjustments', icon: <SlidersHorizontal size={17} />, show: true },
+    { to: '/reports', label: 'Reports', icon: <BarChart3 size={17} />, show: isManagerOrAbove(role) },
+    { to: '/audit-log', label: 'Audit Log', icon: <ScrollText size={17} />, show: isManagerOrAbove(role) },
   ];
 
   const setupNav: NavItem[] = [
@@ -100,6 +107,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           {renderSection('Main', mainNav)}
           {renderSection('Inventory', inventoryNav)}
           {renderSection('Sales', salesNav)}
+          {renderSection('Controls', controlsNav)}
           {renderSection('Setup', setupNav)}
           {renderSection('Administration', adminNav)}
         </nav>

@@ -37,10 +37,13 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       // Pending transfer approvals (RLS shows only what the user can see).
-      const { count } = await supabase.from('transfer_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending');
-      setPendingApprovals(count ?? 0);
+      // Pending transfer approvals + invoice actions + adjustments.
+      const [transferPending, otherPending] = await Promise.all([
+        supabase.from('transfer_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('approval_requests').select('id', { count: 'exact', head: true })
+          .in('request_type', ['invoice_refund', 'invoice_cancel', 'adjustment']).eq('status', 'pending'),
+      ]);
+      setPendingApprovals((transferPending.count ?? 0) + (otherPending.count ?? 0));
 
       // Today's paid sales.
       const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
@@ -122,11 +125,11 @@ const DashboardPage: React.FC = () => {
             <div className="card" style={{ padding: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                 <ArrowLeftRight size={18} color="var(--primary)" />
-                <h3 style={{ fontSize: 15 }}>Pending Transfer Approvals</h3>
+                <h3 style={{ fontSize: 15 }}>Pending Approvals</h3>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                <strong style={{ fontSize: 22, fontFamily: 'var(--font-display)' }}>{pendingApprovals}</strong> transfer request{pendingApprovals !== 1 ? 's' : ''} waiting for review.{' '}
-                <a href="/transfers">Review now →</a>
+                <strong style={{ fontSize: 22, fontFamily: 'var(--font-display)' }}>{pendingApprovals}</strong> request{pendingApprovals !== 1 ? 's' : ''} waiting for review.{' '}
+                <a href="/transfers">Transfers →</a> · <a href="/approvals">Approvals →</a>
               </p>
             </div>
           )}
@@ -152,22 +155,22 @@ const DashboardPage: React.FC = () => {
       )}
 
       <div className="card" style={{ padding: 24 }}>
-        <h3 style={{ fontSize: 16, marginBottom: 10 }}>Phase 1 — Foundation</h3>
+        <h3 style={{ fontSize: 16, marginBottom: 10 }}>System Complete — All Phases Live</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, marginBottom: 16, maxWidth: 640 }}>
-          This is the foundation build: authentication, roles, and the core master data. Once you've
-          confirmed login and role-based access work correctly, the next phases add warehouse &amp; store
-          inventory, stock transfers with approvals, store price lists, invoices, split payments, affiliate
-          commission, refunds, adjustments, audit logs, and reports.
+          The full inventory and sales platform is in place: authentication and roles, warehouse
+          and store inventory with approval-driven transfers, the sales engine with split payments
+          and affiliate commission, and the controls layer — refunds, cancellations, inventory
+          adjustments, audit log, and reports.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
           {[
-            { phase: 'Phase 1', title: 'Foundation', detail: 'Auth · Roles · Products · Warehouses · Stores · Payment methods', active: true },
-            { phase: 'Phase 2', title: 'Inventory', detail: 'Warehouse & store stock · Stock-in · Transfers · Approvals', active: false },
-            { phase: 'Phase 3', title: 'Sales', detail: 'Customers · Affiliates · Price lists · Invoices · Payments', active: false },
-            { phase: 'Phase 4', title: 'Controls', detail: 'Refunds · Adjustments · Audit log · Soft delete · Reports', active: false },
+            { phase: 'Phase 1', title: 'Foundation', detail: 'Auth · Roles · Products · Warehouses · Stores · Payment methods' },
+            { phase: 'Phase 2', title: 'Inventory', detail: 'Warehouse & store stock · Stock-in · Transfers · Approvals' },
+            { phase: 'Phase 3', title: 'Sales', detail: 'Customers · Affiliates · Price lists · Invoices · Payments' },
+            { phase: 'Phase 4', title: 'Controls', detail: 'Refunds · Adjustments · Audit log · Reports' },
           ].map(p => (
-            <div key={p.phase} style={{ padding: 14, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: p.active ? 'var(--primary-light)' : 'var(--surface-2)', opacity: p.active ? 1 : 0.7 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: p.active ? 'var(--primary)' : 'var(--text-muted)', letterSpacing: '0.05em' }}>{p.phase}{p.active ? ' · ACTIVE' : ''}</div>
+            <div key={p.phase} style={{ padding: 14, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--primary-light)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.05em' }}>{p.phase} · LIVE</div>
               <div style={{ fontWeight: 600, fontSize: 14, margin: '4px 0 5px' }}>{p.title}</div>
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.45 }}>{p.detail}</div>
             </div>
